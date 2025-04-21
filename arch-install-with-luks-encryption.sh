@@ -4,11 +4,12 @@
 DISK="/dev/nvme0n1"          # Replace with your target disk (e.g., /dev/nvme0n1)
 HOSTNAME="onelove"
 USERNAME="sum"
-PASSWORD="kali"
+PASSWORD="******"
 TIMEZONE="Asia/Kolkata"   # e.g., Asia/Kolkata
 
 EFI="/dev/nvme0n1p1"
-CRYPT="/dev/nvme0n1px"
+BOOT="/dev/nvme0n1p6"
+CRYPT="/dev/nvme0n1p7"
 
 # LUKS encryption
 echo -n "$PASSWORD" | cryptsetup luksFormat $CRYPT -
@@ -25,9 +26,11 @@ mkfs.ext4 /dev/vg0/root
 mkfs.ext4 /dev/vg0/home
 
 mount /dev/vg0/root /mnt
-mkdir /mnt/home /mnt/boot
+mkdir /mnt/home /mnt/boot /mnt/boot/EFI
 mount /dev/vg0/home /mnt/home
-mount $EFI /mnt/boot
+mount $BOOT /mnt/boot
+mount $EFI /mnt/boot/EFI
+
 
 # Install base system
 pacstrap /mnt base linux linux-firmware lvm2 sudo networkmanager vim
@@ -57,6 +60,8 @@ echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
 # Enable services
 systemctl enable NetworkManager
+
+pacman -Sy linux linux-headers linux-firmware
 
 # Initramfs: enable encrypt+lvm
 sed -i 's/^HOOKS=(base udev autodetect.*)/HOOKS=(base udev keyboard keymap encrypt lvm2 filesystems)/' /etc/mkinitcpio.conf
